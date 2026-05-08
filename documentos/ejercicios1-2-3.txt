@@ -1,0 +1,962 @@
+Practica 02 - Gestión estudiantes
+- Parte 3 -
+
+Introducción
+
+En esta parte de la práctica trabajaremos con bases de datos mediante JDBC para evitar que la información de la aplicación se pierda cada vez que el programa finaliza. Este proceso forma parte de la gestión de la persistencia, es decir, del almacenamiento duradero de los datos. Aunque los ficheros también proporcionan persistencia, en la industria las bases de datos son la opción más habitual y la que utilizaremos aquí.
+Es importante remarcar que, aunque utilicemos una base de datos, seguiremos necesitando estructuras de datos en memoria como List, Set o Map. Estas estructuras permiten que la aplicación funcione de manera ágil y eficiente. Por tanto, el acceso a la base de datos debería realizarse solo en momentos concretos:
+•	al inicio del programa, para cargar los datos, y
+•	al final, para guardar los cambios realizados.
+Acceder continuamente a la base de datos dentro del flujo normal del programa puede ser costoso y provocar cuellos de botella. Por este motivo, durante la práctica trabajaremos con datos en memoria y solo consultaremos la base de datos cuando resulte necesario.
+
+Apartado 3
+
+Para conectar con la Base de Datos debéis basaros en la sesión que tuvimos sobre como usar el driver JDBC de MySql en el pom.xml y tomar como base de ejemplo el código Java que conectaba al servidor MySQL instalado en el contenedor LXD.
+
+La base de datos con la que vamos a operar
+Necesitamos una BD muy simple, que solo contenga la siguiente tabla en MySQL:
+
+
+
+
+Práctica 3
+Incorporación de Informes con tecnología JasperReports
+
+Esta práctica es una evolución de la anterior, en tanto que incorporaremos una nueva funcionalidad: la generación de informes con la tecnología JasperReport para generar Informes en formato PDF, HTML, Excel y Word.
+
+Para ello:
+•	Tendréis que diseñar el informe con JasperSoftStudio. No es necesario para esta práctica porque por falta de tiempo se os da el informe pero en la vida real sí que tendríais que hacerlo.
+•	Importamos mediante MAVEN las librerías de JasperReport que necesitemos. Para el caso de poder exportar a Excel también necesitamos el fichero poi-x.jar.
+•	Se suministra una clase servlet, llamada Report.java, la cual ya es operativa para presentar un informe de los alumnos matriculados a los cursos. Deberéis pasarle parámetros desdel front-end para determinar el formato en qué se debe generar el informe.
+•	El informe se proporciona tanto en su versión fuente original (Alumnos.jrxml) como en su versión compilada (Alumnos.jasper). El formato jrxml nos permitiría en un futuro poder abrir el informe con JasperSoftStudio y modificar lo necesario. Para el objetivo de esta práctica no necesitamos modificar el informe, así que podemos usar el fichero Alumnos.jasper directamente, ubicándolo en el directorio de nuestro proyecto, dentro de webapp\WEB-INF podemos crear, por ejemplo, las carpetas “Informes\Alumnos” (nos creamos estas carpetas para que nos funcione el código que se proporciona junto al enunciado).
+
+A continuación se muestran las dependencias que tendréis que añadir al fichero pom.xml de MAVEN (ojo con las versiones, ya que siempre evolucionan):
+		<dependency>
+			<groupId>jakarta.servlet</groupId>
+			<artifactId>jakarta.servlet-api</artifactId>
+			<version>6.0.0</version>
+			<scope>provided</scope>
+		</dependency>
+
+		<dependency>
+			<groupId>com.mysql</groupId>
+			<artifactId>mysql-connector-j</artifactId>
+			<version>8.4.0</version>
+		</dependency>
+
+		<dependency>
+			<groupId>net.sf.jasperreports</groupId>
+			<artifactId>jasperreports</artifactId>
+			<version>6.21.3</version>
+		</dependency>
+
+		<dependency>
+			<groupId>org.apache.poi</groupId>
+			<artifactId>poi-ooxml</artifactId>
+			<version>5.3.0</version>
+		</dependency>
+
+El formulario para el usuario podría ser como el siguiente (notad como en la parte inferior el usuario puede elegir el tipo de formato para el informe):
+
+ 
+
+
+A continuación se muestran las capturas de pantalla relativas a las vistas generadas por el servlet ‘Report.java’:
+
+PDF
+
+ 
+
+Excel
+
+ 
+
+
+Word
+
+ 
+
+Nota: El servlet que se os proporciona también exporta el informe a formato HTML. Para ello utiliza internamente un servlet propio (cuya clase viene en la librería de JasperReport) llamado ImageServlet, cuyo cometido es aportar una buena estética del report en HTML (redondeando las esquinas y cosas así). En fin, que para que se encuentre este  este servlet auxiliar para el caso de querer generar formato HTML del informe, necesitamos declararlo en el descriptor de despliegue (web.xml):
+
+<?xml version="1.0" encoding="UTF-8"?>
+<web-app xmlns = "https://jakarta.ee/xml/ns/jakartaee"
+        xmlns:xsi = "http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation = "https://jakarta.ee/xml/ns/jakartaee
+        https://jakarta.ee/xml/ns/jakartaee/web-app_6_0.xsd"
+        version = "6.0"
+        metadata-complete = "false">
+
+	<display-name>Practica3</display-name>
+	<welcome-file-list>
+		<welcome-file>index.html</welcome-file>
+	</welcome-file-list>
+	<servlet>
+		<servlet-name>Controlador</servlet-name>
+		<servlet-class>net.elpuig.daw2.m7.servlets.Controlador</servlet-class>
+	</servlet>
+	<servlet-mapping>
+		<servlet-name>Controlador</servlet-name>		
+		<url-pattern>*.go</url-pattern>
+	</servlet-mapping>
+	<servlet>
+		<servlet-name>Report</servlet-name>
+		<servlet-class>net.elpuig.daw2.m7.servlets.Report</servlet-class>
+		<async-supported>true</async-supported>
+	</servlet>
+	<servlet-mapping>
+		<servlet-name>Report</servlet-name>
+		<url-pattern>/informe</url-pattern>
+	</servlet-mapping>
+	<servlet>
+		<servlet-name>ImageServlet</servlet-name>
+		<servlet-class>net.sf.jasperreports.j2ee.servlets.ImageServlet</servlet-class>
+	</servlet>
+	<servlet-mapping>
+		<servlet-name>ImageServlet</servlet-name>
+		<url-pattern>/image</url-pattern>
+	</servlet-mapping>
+</web-app>
+
+A continuación, el código XML del informe (este código realmente no lo necesitáis para esta práctica pero es interesante que lo tengáis desde un punto de vista académico):
+
+Alumnos.jrxml
+<?xml version="1.0" encoding="UTF-8"?>
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="Alumnos" pageWidth="595" pageHeight="842" columnWidth="535" leftMargin="20" rightMargin="20" topMargin="20" bottomMargin="20">
+	<queryString language="SQL">
+		<![CDATA[SELECT
+     alumnos.`id` AS alumnos_id,
+     alumnos.`curso` AS alumnos_curso,
+     alumnos.`nombre` AS alumnos_nombre
+FROM
+     `alumnos` alumnos]]>
+	</queryString>
+	<field name="alumnos_id" class="java.lang.Integer">
+		<fieldDescription><![CDATA[]]></fieldDescription>
+	</field>
+	<field name="alumnos_curso" class="java.lang.String">
+		<fieldDescription><![CDATA[]]></fieldDescription>
+	</field>
+	<field name="alumnos_nombre" class="java.lang.String">
+		<fieldDescription><![CDATA[]]></fieldDescription>
+	</field>
+	<background>
+		<band/>
+	</background>
+	<title>
+		<band height="58">
+			<line>
+				<reportElement x="0" y="8" width="555" height="1"/>
+			</line>
+			<line>
+				<reportElement positionType="FixRelativeToBottom" x="0" y="51" width="555" height="1"/>
+			</line>
+			<staticText>
+				<reportElement x="65" y="13" width="424" height="35"/>
+				<textElement textAlignment="Center">
+					<font size="26" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Listado de alumnos]]></text>
+			</staticText>
+		</band>
+	</title>
+	<pageHeader>
+		<band/>
+	</pageHeader>
+	<columnHeader>
+		<band height="18">
+			<staticText>
+				<reportElement mode="Opaque" x="0" y="0" width="185" height="18" forecolor="#FFFFFF" backcolor="#999999"/>
+				<textElement>
+					<font size="12"/>
+				</textElement>
+				<text><![CDATA[Identificador]]></text>
+			</staticText>
+			<staticText>
+				<reportElement mode="Opaque" x="185" y="0" width="185" height="18" forecolor="#FFFFFF" backcolor="#999999"/>
+				<textElement>
+					<font size="12"/>
+				</textElement>
+				<text><![CDATA[Curso]]></text>
+			</staticText>
+			<staticText>
+				<reportElement mode="Opaque" x="370" y="0" width="185" height="18" forecolor="#FFFFFF" backcolor="#999999"/>
+				<textElement>
+					<font size="12"/>
+				</textElement>
+				<text><![CDATA[Nombre del alumno]]></text>
+			</staticText>
+		</band>
+	</columnHeader>
+	<detail>
+		<band height="20">
+			<textField>
+				<reportElement x="0" y="0" width="185" height="20"/>
+				<textElement>
+					<font size="12"/>
+				</textElement>
+				<textFieldExpression class="java.lang.Integer"><![CDATA[$F{alumnos_id}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="185" y="0" width="185" height="20"/>
+				<textElement>
+					<font size="12"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{alumnos_curso}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="370" y="0" width="185" height="20"/>
+				<textElement>
+					<font size="12"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{alumnos_nombre}]]></textFieldExpression>
+			</textField>
+		</band>
+	</detail>
+	<columnFooter>
+		<band/>
+	</columnFooter>
+	<pageFooter>
+		<band height="26">
+			<textField evaluationTime="Report" pattern="" isBlankWhenNull="false">
+				<reportElement key="textField" x="516" y="6" width="36" height="19" forecolor="#000000" backcolor="#FFFFFF"/>
+				<box>
+					<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement>
+					<font size="10"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA["" + $V{PAGE_NUMBER}]]></textFieldExpression>
+			</textField>
+			<textField pattern="" isBlankWhenNull="false">
+				<reportElement key="textField" x="342" y="6" width="170" height="19" forecolor="#000000" backcolor="#FFFFFF"/>
+				<box>
+					<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement textAlignment="Right">
+					<font size="10"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA["Page " + $V{PAGE_NUMBER} + " of "]]></textFieldExpression>
+			</textField>
+			<textField pattern="" isBlankWhenNull="false">
+				<reportElement key="textField" x="1" y="6" width="209" height="19" forecolor="#000000" backcolor="#FFFFFF"/>
+				<box>
+					<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement>
+					<font size="10"/>
+				</textElement>
+				<textFieldExpression class="java.util.Date"><![CDATA[new Date()]]></textFieldExpression>
+			</textField>
+		</band>
+	</pageFooter>
+	<summary>
+		<band/>
+	</summary>
+</jasperReport>
+
+Finalmente, el código del servlet que genera el report:
+
+Report.java
+package net.elpuig.daw2.m7.servlets;
+
+import java.io.File;
+import java.io.IOException;
+import java.util.HashMap;
+
+import jakarta.servlet.AsyncContext;
+import jakarta.servlet.AsyncEvent;
+import jakarta.servlet.AsyncListener;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServlet;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+
+import net.elpuig.daw2.m7.jdbc.Conexion;
+
+import net.sf.jasperreports.engine.JRException;
+import net.sf.jasperreports.engine.JasperFillManager;
+import net.sf.jasperreports.engine.JasperPrint;
+import net.sf.jasperreports.engine.JasperReport;
+import net.sf.jasperreports.engine.export.HtmlExporter;
+import net.sf.jasperreports.engine.export.JRPdfExporter;
+import net.sf.jasperreports.engine.export.JRXlsExporter;
+import net.sf.jasperreports.engine.export.ooxml.JRDocxExporter;
+import net.sf.jasperreports.engine.util.JRLoader;
+import net.sf.jasperreports.export.SimpleExporterInput;
+import net.sf.jasperreports.export.SimpleHtmlExporterOutput;
+import net.sf.jasperreports.export.SimpleOutputStreamExporterOutput;
+import net.sf.jasperreports.export.SimplePdfExporterConfiguration;
+import net.sf.jasperreports.export.SimpleXlsReportConfiguration;
+import net.sf.jasperreports.j2ee.servlets.ImageServlet;
+import net.sf.jasperreports.web.util.WebHtmlResourceHandler;
+
+public class Report extends HttpServlet {
+	private static final long serialVersionUID = 1L;
+
+	public void init() throws ServletException {
+		Conexion.setURL("jdbc:mysql://172.16.0.187:3306/dbalumnos?user=profe&password=secreto");
+	}
+
+	protected void service(HttpServletRequest request, HttpServletResponse response)
+			throws ServletException, IOException {
+		final AsyncContext ctxAsincrono = request.startAsync();
+		ctxAsincrono.setTimeout(10_0000); // 10 segundos como maximo para generar el report
+		ctxAsincrono.addListener(new AsyncListener() {
+			public void onComplete(AsyncEvent event) throws IOException {
+				System.out.println("Informe generado");
+			}
+
+			public void onTimeout(AsyncEvent event) throws IOException {
+				System.out.println("Se ha excedido el tiempo máximo para generar el informe");
+			}
+
+			public void onError(AsyncEvent event) throws IOException {
+				System.out.println(
+						"Se ha producido un error al generar el informe: " + event.getThrowable().getMessage());
+			}
+
+			public void onStartAsync(AsyncEvent event) throws IOException {
+			}
+		});
+
+		ctxAsincrono.start(new Runnable() {
+
+			@Override
+			public void run() {
+				try {
+					// Localizar el informe compilado
+					File informeCompilado = new File(
+							getServletContext().getRealPath("/WEB-INF/informes/alumnos/Alumnos.jasper"));
+
+					// Cargar el informe compilado
+					JasperReport jasperReport = (JasperReport) JRLoader
+							.loadObject(new File(informeCompilado.getPath()));
+
+					// Actualizarlo con los datos de la BD
+					JasperPrint jasperPrint = JasperFillManager.fillReport(jasperReport, new HashMap<String, Object>(0),
+							Conexion.getConexion());
+
+					/*
+					 * Ahora ejecutamos un metodo especifico segun el informe que haya seleccionado
+					 * el usuario
+					 */
+
+					// Obtener el tipo de informe seleccionado por el usuario
+					String tipoInforme = request.getParameter("optInformes");
+
+					response.setContentType(tipoInforme);
+
+					if ("application/pdf".equals(tipoInforme)) {
+
+						JRPdfExporter exporter = new JRPdfExporter();
+
+						exporter.setExporterInput(new SimpleExporterInput(jasperPrint));
+						exporter.setExporterOutput(new SimpleOutputStreamExporterOutput(response.getOutputStream()));
+						SimplePdfExporterConfiguration configuration = new SimplePdfExporterConfiguration();
+						exporter.setConfiguration(configuration);
+
+						exporter.exportReport();
+
+					} else if ("application/vnd.ms-excel".equals(tipoInforme)) {
+
+						response.setHeader("Content-Disposition", "inline; filename=informe.xls");
+						JRXlsExporter exporter = new JRXlsExporter();
+
+						exporter.setExporterInput(new SimpleExporterInput(jasperPrint));
+
+						exporter.setExporterOutput(new SimpleOutputStreamExporterOutput(response.getOutputStream()));
+
+						SimpleXlsReportConfiguration configuration = new SimpleXlsReportConfiguration();
+						exporter.setConfiguration(configuration);
+
+						exporter.exportReport();
+
+					} else if ("application/msword".equals(tipoInforme)) {
+
+						response.setHeader("Content-Disposition", "inline; filename=informe.doc");
+						JRDocxExporter exporter = new JRDocxExporter();
+
+						exporter.setExporterInput(new SimpleExporterInput(jasperPrint));
+						exporter.setExporterOutput(new SimpleOutputStreamExporterOutput(response.getOutputStream()));
+
+						exporter.exportReport();
+
+					} else {
+
+						request.getSession().setAttribute(ImageServlet.DEFAULT_JASPER_PRINT_SESSION_ATTRIBUTE,
+								jasperPrint);
+
+						HtmlExporter exporter = new HtmlExporter();
+
+						exporter.setExporterInput(new SimpleExporterInput(jasperPrint));
+
+						SimpleHtmlExporterOutput exporterOutput = new SimpleHtmlExporterOutput(
+								response.getOutputStream());
+						exporterOutput.setImageHandler(new WebHtmlResourceHandler("image?image={0}"));
+
+						exporter.setExporterOutput(exporterOutput);
+
+						exporter.exportReport();
+					}
+
+				} catch (JRException | IOException e) {
+					e.printStackTrace();
+				} finally {
+					ctxAsincrono.complete();
+
+
+
+
+
+
+Práctica 6 – Sesiones HTTP
+
+Primera parte									
+Introducción
+
+En esta práctica vamos a introducir el manejo de sesiones y el control de acceso para determinadas operaciones de nuestro sitio web. Esto proporcionará a nuestro proyecto una mayor funcionalidad.
+
+session vs. request 
+
+Una sesión la podemos ver como una “tabla de dos columnas” que el servlet mantiene en memoria. Una columna sirve para guardar el nombre de una variable (atributo) y la otra para guardar su valor, como por ejemplo: 
+
+ATRIBUTO	VALOR
+usuario	Antonio
+edad	40
+
+Dado que el sevlet mantiene en memoria la “tabla” esto nos permite guardar y recuperar valores de ella. Podemos ver como la filosofía de las sesiones (session) es muy parecida a la de las peticiones (request) con las que ya hemos tratado un poco en ejercicios anteriores. Pero hay diferencias. A saber: 
+
+En una petición (requets) la “tabla” de información sólo está disponible en el espacio de tiempo entre que el servlet lee valores que el usuario le pasa desde el navegador (por ejemplo, cuando le pasa su nombre y edad desde un formulario) o al revés, cuando el usuario lee valores  que el servlet le ha dejado preparados (por ejemplo, una lista con todos los alumnos existentes).
+
+En cambio, en una sesión la información de la “tabla” está siempre disponible para cualquier usuario y desde cualquier página de nuestro sitio web en tanto que no se elimine la sesión. La eliminación de la sesión puede ser provocada por el propio usuario (por ejemplo, al pulsar un botón para desconectar) o por el propio servlet, si se ha alcanzado un determinado tiempo de inactividad por parte del usuario.
+
+
+De las clases de teoría sabemos que cuando un usuario se conecta a un servidor web se crea una sesión que lo identifica unívocamente (quiera o no el usuario). Ahora bien, el programador puede utilizar esta información subyacente a la sesión que se establece entre el navegador y el servidor web o puede decidir no utilizarla.
+
+Enunciado de la práctica
+
+De momento cualquier usuario de nuestro sitio web puede hacer cualquier operación: consultar los alumnos existentes, dar de alta alumnos y visualizar listados de alumnos.  Además, desconocemos totalmente quienes son los usuarios que acceden a nuestro sitio web: no sabemos su nombre, ni en que momento han accedido, ni durante cuanto tiempo han estado navegando, etc.
+
+Esta situación tiene que cambiar. Primero vamos a implementar un registro de información sobre la sesión del usuario y después el control de acceso a determinadas operaciones.
+
+Registro de información de la sesión
+
+Nuestro objetivo va a consistir en almacenar la siguiente información de la sesión:
+
+Atributo	Descripción
+Identificador	Número hexadecimal generado automáticamente por el servidor
+Fecha/hora creación	Fecha en que el usuario llamó al servlet por primera vez
+Hora último acceso	Hora en que el usuario llamó al servlet por última vez
+Número de accesos previos	Número de veces que el usuario ha llamado al servlet
+Usuario	Nombre del usuario. De momento en blanco, más adelante se explicará.
+ 
+Y mostrarla en una página jsp, tal que así:
+
+ 
+
+Para que el usuario pueda acceder a esta pantalla tendremos que permitirle pulsar sobre algún botón o link desde la página inicial. Por ejemplo:
+
+ 
+
+
+¿Cómo se hace lo anterior?
+
+En el método service del servlet hay que poner la instrucción que crea o utiliza una sesión. El parámetro ‘true’ indica crear la sesión si esta no existe.
+
+// Creación de la sesión. Si ya existe la utiliza			
+HttpSession sesion = request.getSession(true);
+
+Luego hay que llamar a un método local encargado de incrementar el contador de veces que el usuario ha invocado al servlet:
+
+incrementarContadorSesion(sesion);
+
+A continuación el código del método:
+
+/*
+ * Metodo para llevar el control del numero de veces
+ * que accede al servlet un usuario
+ */
+private void incrementarContadorSesion(HttpSession sesion) {
+			
+	// Variable para guardar las veces que accede el usuario
+	Integer contadorAccesos=new Integer(0);
+		
+	// Si ya existe la sesion...
+	if (!sesion.isNew()) {
+		// Recuperar el contador
+		Integer contadorActual=(Integer)sesion
+.getAttribute("contadorAccesos");
+		// Incrementarlo
+		if (contadorActual!=null) {
+			contadorAccesos=
+				new Integer(contadorActual.intValue()+1);
+		}	
+	}
+	
+	// Guardar el nuevo valor del contador
+	sesion.setAttribute("contadorAccesos", contadorAccesos);			
+}		
+
+En nuestra página inicial llamamos al servlet pasándole el tipo de operación que queremos hacer. En mi caso a esta operación la he llamado ‘info’.
+
+Cuando el servlet reconoce a la operación ‘info’ redirecciona el flujo a una página jsp que he llamado ‘infosesion.jsp’
+
+‘infosesion.jsp’ no hace nada extraño, sencillamente dibuja una tabla y muestra los valores deseados de la sesión. A modo de ejemplo:
+
+<tr>
+	<td>Identificador</td>
+	<td>			
+	<%=session.getId() %>
+	</td>
+</tr>
+<tr>
+<td>Fecha/hora creación</td>
+<td>
+<%=new Date(session.getCreationTime()) %>
+</td>
+</tr>
+…
+
+Como se puede apreciar, es posible utilizar el objeto ‘session’ directamente en una página jsp. Dado que es un objeto predefinido no hace falta pasarlo desde el servlet como hacemos con nuestras variables. Los métodos como getId(), getCreationTime(), etc se pueden utilizar tal y como se muestran en el código anterior, pero para recuperar valores que hubiésemos almacenado nosotros tendríamos que utilizar el método getAttribute(“nombre_atributo”).
+
+Finalización de la sesión
+
+Vamos a permitir que el usuario pueda desconectar la sesión. Con esta acción el servlet desvincula la “tabla” creada para el “usuario” en curso.
+
+Para ello añadiremos un link en la página principal:
+
+ 
+Al pulsar sobre ‘Desconectar’ aparecerá un mensaje de confirmación:
+
+ 
+
+Si pulsamos ‘Aceptar’ nos aparecerá una pantalla informativa:
+
+ 
+
+
+¿Cómo se hace lo anterior?
+
+Tenemos que hacer varias cosas. La idea es la siguiente: cuando en la página inicial (index.html) el usuario pulsa sobre el link ‘Desconectar’:
+
+<a href="javascript:desconectar()"> 
+Desconectar
+</a>
+
+se llama a una función JavaScript que nos solicita la confirmación:
+
+<SCRIPT type="text/javascript">
+
+function desconectar()
+{
+	var log_out=confirm("Con esta accion se finaliza la sesion actual ¿Esta seguro?");
+
+	if (log_out)
+		window.location="Controlador?operacion=desconectar";		
+ 
+}
+</SCRIPT>
+
+Como podemos apreciar, si nuestra respuesta es afirmativa la función JavaScript llama al servlet indicándole que se debe ejecutar una operación llamada ‘desconectar’. El servlet reconoce la operación y reenvía el flujo del programa a ‘desconectado.jsp’. 
+
+A continuación se muestra el código para aclarar estos conceptos:
+
+Este el código del servlet:
+...
+private static final String 
+PG_RESPUESTA_DESCONEXION = "/desconectado.jsp";
+...
+
+if (operacion.equals("desconectar")) {
+session.invalidate();	
+	siguientePag=PG_RESPUESTA_DESCONEXION;
+}
+...
+
+Por su parte, ‘desconectado.jsp’ tiene que informar al usuario de que la desconexión se ha producido y permitirle volver al ‘index.jsp’.
+
+
+Controlar el acceso a determinadas operaciones
+
+Vamos a hacer que cuando el usuario quiera añadir un alumno le aparezca un formulario solicitándole su login y su password:
+
+ 
+
+Al intentar hacer el alta:
+
+ 
+
+ Si nos equivocamos con el usuario y/o la contraseña:
+
+ 
+
+Y si todo ha ido bien:
+
+ 
+
+¿Cómo se hace lo anterior?
+
+La idea es que cuando se invoca a la operación ‘alta’ lo primero que hacemos es guardar en variables la información relativa al nuevo alumno. Después se mira si en la sesión hay un valor no nulo para el usuario (no está validado) o si el usuario ya está validado:
+
+…
+// El usuario quiere dar de alta un alumno	
+} else if (operacion.equals("alta")) {
+
+// Guardamos los valores que permiten dar del alta
+// al alumno
+String id = request.getParameter("txtID");
+	String curso = request.getParameter("txtCurso");
+	String nombre=request.getParameter("txtNombre");									
+	// Si el usuario se ha validado...
+	if ((String) sesion.getAttribute("usuario")!=null) {
+// Llevar a cabo el alta del alumno
+…
+
+Pero si el usuario aún no se ha validado no podemos dar de alta al alumno todavía, sino que tenemos que guardar los datos del alumno (que están en la request) en la session (para que posteriormente, cuando lo hayamos validado, podamos hacer el alta). Una vez guardados los datos hemos de pasar el control del programa a la página que lleva a cabo la validación; en mi caso ‘acceso.jsp’:
+
+private static final String PG_RESPUESTA_VALIDARSE = "/acceso.jsp";
+
+...
+
+}
+else {
+	// Obtenemos los valores de la request y 
+	// los guardamos en la session				
+	sesion.setAttribute("sesAlumno", 
+			request.getParameter("txtID"));
+	sesion.setAttribute("sesCurso", 
+			request.getParameter("txtCurso"));
+	sesion.setAttribute("sesNombre", 
+			request.getParameter("txtNombre"));
+
+	siguientePag=PG_RESPUESTA_VALIDARSE;				
+}
+
+Cuando el usuario ha introducido sus credenciales y pulsa el botón ‘Aceptar’ se invoca al servlet con la operación ‘validar’. El servlet debe hacer lo siguiente:
+Obtener de la request el usuario y password que le llegan de la página acceso.jsp:
+
+else if (operacion.equals("validar")) {
+			
+	String usuarioIntro = request.getParameter("txtUsuario");
+	String passwIntro = request.getParameter("txtContrasenya");
+		
+Pasarlos como parámetros a un método privado que los compruebe:
+String user = validarUsuario(usuarioIntro, passwIntro);
+
+Realmente tendríamos que cotejarlos con valores de una tabla de la BD pero para nuestras pruebas podemos hacer algo así:
+
+// Nos devuelve el nombre del usuario si la pareja 
+// nombre-passw es correcta
+// Tendriamos que comparar con valores de la BD!
+private String validarUsuario(String usuarioIntro, String passwIntro) {
+	String retorno=null;		
+	
+	if (usuarioIntro.equals("daniel") && 
+			passwIntro.equals("daniel")) {
+		retorno=usuarioIntro;
+	}
+	return retorno;
+}
+
+Al volver del método validarUsuario(…) si user es igual a null es que la validación ha ido mal, por tanto, tenemos que redirigir al usuario a una página de error de login:
+
+if (user == null) {
+	// El usuario no tiene autorización para acceder a la 
+	// página. Mostramos un diálogo para introducir login 
+	// y password 								
+	siguientePag=PG_RESPUESTA_ERROR_VALIDACION;
+}
+
+En cambio, si la validación ha sido correcta tenemos que almacenar el nombre de usuario en la sesión y volver ha invocar al servlet para que ejecute la operación ‘alta’:
+…
+private static final String PG_RESPUESTA_REINSERT = "/Controlador?operacion=alta";
+…
+else {
+	// Hemos autentificado el nombre del usuario, pero aun 
+	// no tenemos usuario para la sesión. Lo ponemos 
+	if (sesion != null) {
+		sesion.setAttribute("usuario", user);
+	}
+	siguientePag=PG_RESPUESTA_REINSERT;			
+}
+
+NOTA: Cuando el usuario se valida en el sistema, si consultamos la información de sesión ahora nos aparecerá su nombre:
+
+ 
+
+
+ 
+Segunda parte								 
+
+Técnicas avanzadas
+(SessionListener)
+Gestión de eventos de sesión en aplicaciones web
+
+Introducción
+
+Existen determinadas situaciones en proyectos Web en las que necesitamos saber cuando se ha creado/destruido una sesión o cuando se ha añadido/eliminado un objeto de ella. Con este ejercicio practicaremos con este tipo de operaciones. 
+Nuestro objetivo va a ser añadir más información a la página que muestra los datos de la sesión. Queremos mostrar una página parecida a esta:
+
+ 
+Las dos últimas filas indican que hay un total de dos usuarios conectados a nuestro sitio web pero sólo uno (daniel) ha sido validado (añadido en la sesión).
+
+Para obtener los valores de las dos últimas filas nuestra aplicación se tendrá que encargar de mantener un contador del número de usuarios que actualmente se han conectado a nuestra aplicación y otro contador para controlar cuántos de ellos se han logado.
+
+¿Cómo lo haremos?
+Primero veamos algo de teoría sobre las siguientes interfaces:
+ 
+HttpSessionListener y HttpSessionBindingListener (javax.servlet.http)
+
+HttpSessionListener y HttpSessionBindingListener son dos interfaces del paquete javax.servlet.http. Las clases que las implementen tendrán un comportamiento especial en nuestro contenedor de servlets (Tomcat). 
+
+HttpSessionListener define dos métodos: sessionCreated() y sessionDestroyed(). Estos métodos son utilizados por el contenedor de aplicaciones para notificarnos cuando la sesión de un usuario ha sido, respectivamente, creada o destruida. Aquellas clases que implementen este interfaz deberán ser registradas como listeners en nuestro fichero web.xml (en el ejemplo que se muestra más abajo la implementa la clase webses.WebSessionListener). 
+
+Por otro lado, HttpSessionBindingListener, contiene dos métodos: valueBound() y valueUnBound(), invocados por el contenedor para indicar a la clase que implemente esta interfaz que una instancia de su propia clase ha sido insertada o eliminada de la sesión. En nuestro caso esto sucederá cuando el usuario haya hecho login y logout, respectivamente).
+
+En nuestro ejemplo la clase beans.Usuario implementa HttpSessionBindingListener. Así, cuando hagamos: 
+sesion.setAttribute("usuario", usuario);
+Tomcat llamará al método valueBound().
+ 
+ServletContext (el contexto de la aplicación)
+
+Los contadores que mantienen el número de usuarios conectados y logados deben estar almacenados en el Contexto del contenedor y cualquiera que intente modificarlos u obtener su valor deberá utilizar una región crítica (parte de código que no puede ser ejecutada por más de un hilo simultáneamente). Esto es necesario porque pueden darse situaciones donde varios hilos en paralelo puedan estar operando con el mismo código (con nuestros contadores), lo que puede provocar inconsistencias. 
+
+¿Qué es el contexto del contenedor (o de la aplicación web)?
+
+El ServletContext permite manejar propiedades y métodos del contexto de los servlets, que viene a ser un espacio común para todos los servlets de nuestra aplicación. Por lo tanto todos los servlets dentro de una misma aplicación web tienen el mismo ServletContext, por eso éste gestiona atributos que se cargan a nivel de toda la aplicación web. Es lo que se llama en otras tecnologías variables de aplicación o globales para el caso de aplicaciones web, ya que todos (jsp y servlets) podrán ver y compartir estos mismos atributos.
+
+Como hemos comentado antes, tenemos que crear la clase WebSessionListener.java encargada de mantener el contador del número de usuarios que se encuentran conectados a nuestra aplicación en un momento dado. El método sessionCreated() aumentará el contador "usuariosConectados", mientras  que sessionDestroyed() lo disminuirá:
+
+package webses;
+
+import javax.servlet.ServletContext;
+import javax.servlet.http.HttpSessionEvent;
+import javax.servlet.http.HttpSessionListener;
+
+public class WebSessionListener implements HttpSessionListener {
+
+public void sessionCreated(HttpSessionEvent arg0) {
+
+System.out.println("Session creada");
+
+ServletContext contexto = 
+		arg0.getSession().getServletContext();
+
+synchronized (contexto) {
+
+Integer usuariosConectados = 
+(Integer) contexto
+.getAttribute("usuariosConectados");
+if (usuariosConectados == null) {
+usuariosConectados = new Integer(0);
+}
+usuariosConectados+=1;
+contexto
+.setAttribute("usuariosConectados",
+				usuariosConectados); 
+
+} // synchronized
+
+}
+
+public void sessionDestroyed(HttpSessionEvent arg0) {
+
+System.out.println("Session destruida");
+ServletContext contexto = 
+arg0.getSession().getServletContext();
+
+synchronized (contexto) {
+
+Integer usuariosConectados = 
+(Integer) contexto
+.getAttribute("usuariosConectados");
+
+if (usuariosConectados == null) {
+usuariosConectados = new Integer(0);
+}
+usuariosConectados-=1;
+contexto
+.setAttribute("usuariosConectados",
+ usuariosConectados); 
+
+} // synchronized
+
+}
+
+}
+
+Por otro lado, tenemos que crear la clase Usuario.java, un bean que almacenará los datos del usuario (de momento nos basta con el nombre del usuario) y que se encargará de incrementar (en el método valueBound()) o decrementar (en el método valueUnBound()) el contador de usuarios logados en la aplicación:
+
+package beans;
+
+import javax.servlet.ServletContext;
+import javax.servlet.http.HttpSessionBindingEvent;
+import javax.servlet.http.HttpSessionBindingListener;
+
+public class Usuario implements HttpSessionBindingListener {
+
+	private String nombre="";
+	
+	public Usuario(String nombre) {
+		this.nombre=nombre;
+	}
+	
+	public String getNombre() { return this.nombre; }
+	
+	public void valueBound(HttpSessionBindingEvent arg0) {
+		
+		System.out.println("User añadido a la session. ID: "+
+				arg0.getSession().getId());
+		
+		ServletContext contexto = arg0.getSession().getServletContext();
+
+		synchronized (contexto) {
+
+			Integer usuariosValidados = (Integer) contexto
+					.getAttribute("usuariosValidados");
+			if (usuariosValidados == null) {
+				usuariosValidados = new Integer(0);
+			}
+			usuariosValidados += 1;
+			contexto.setAttribute("usuariosValidados", usuariosValidados);
+
+		} // synchronized
+	}
+
+	public void valueUnbound(HttpSessionBindingEvent arg0) {
+		
+		System.out.println("User eliminado de session. ID: "+
+				arg0.getSession().getId());
+		
+		ServletContext contexto = arg0.getSession().getServletContext();
+
+		synchronized (contexto) {
+			Integer usuariosValidados = (Integer) contexto
+					.getAttribute("usuariosValidados");
+
+			if (usuariosValidados == null) {
+				usuariosValidados = new Integer(0);
+			}
+			usuariosValidados -= 1;
+			contexto.setAttribute("usuariosValidados", usuariosValidados);
+
+		} // synchronized
+	}
+}
+
+Por otro lado, tenemos que actualmente utilizamos un método privado en el servlet Controlador para validar al usuario. Este método lo utiliza el propio servlet Controlador para añadir el nombre del usuario a la sesión en curso. Podríamos mejorar esto: además de las dos clases anteriores (WebSessionListener y Usuario) podríamos crear un servlet llamado Login.java que será llamado desde el servlet Controlador para hacer la operación de validación que hasta el momento estaba haciendo el propio servlet Controlador.
+
+Ejemplo de Login.java
+
+package servlets;
+
+import java.io.IOException;
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import beans.Usuario;
+
+public class Login extends HttpServlet {
+
+	private static final long serialVersionUID = -7432700501449176526L;
+	private static final String PG_RESPUESTA_ERROR = "/error.jsp";
+	private static final String PG_RESPUESTA_ALTA = "/Controlador?operacion=alta";
+	private String siguientePag = "";
+	
+	@Override
+	protected void doGet(HttpServletRequest arg0, HttpServletResponse arg1)
+			throws ServletException, IOException {
+
+		doPost(arg0, arg1);
+	}
+
+	@Override
+	protected void doPost(HttpServletRequest arg0, HttpServletResponse arg1)
+			throws ServletException, IOException {
+		
+		String usuarioIntro = arg0.getParameter("txtUsuario");
+		String passwIntro = arg0.getParameter("txtContrasenya");
+		
+		// Intentamos obtener el nombre del usuario si es que está
+		// ya validado
+		String sessionUser = (String) arg0.
+				getSession().getAttribute("nombre");
+		
+		// Variable que tomará como valor el nombre del usuario
+		// confirmado contra la "Base de datos" 
+		String user = null;
+		
+		// Si el usuario no está validado hay que validarlo 
+		if (sessionUser == null)
+			user = validarUsuario(usuarioIntro, passwIntro);
+		
+		// Si ni está validado y tampoco se reconoce su usuario-password
+		if ((sessionUser == null) && (user == null)) {
+			siguientePag=PG_RESPUESTA_ERROR;		
+		} else {
+			// Si no está validado y el usuario introducido es correcto
+			if ((sessionUser == null) && (user!=null)) {
+				Usuario usuari=new Usuario(user);
+				arg0.getSession().setAttribute("usuario", usuari);				
+				arg0.getSession().setAttribute("nombre", usuari.getNombre());
+			}
+			siguientePag=PG_RESPUESTA_ALTA;
+		}
+				
+		getServletContext().getRequestDispatcher(siguientePag)
+				.forward(arg0, arg1);
+	}
+	
+	// Nos devuelve el nombre del usuario si la pareja 
+	// nombre-passw es correcta
+	// Tendriamos que comparar con valores de la BD!
+	private String validarUsuario(String usuarioIntro, String passwIntro) {
+		String retorno=null;		
+		
+		if (usuarioIntro.equals("daniel") && 
+				passwIntro.equals("daniel")) {
+			retorno=usuarioIntro;
+		}
+		return retorno;
+	}
+
+}
+
+Finalmente tendremos que añadir a la JSP que muestra la información de sesión un scriptlet sincronizado para obtener los usuarios conectados y los validados:
+
+<%
+	ServletContext contexto = getServletContext();
+	Integer usuariosConectados = null;
+	Integer usuariosValidados = null;
+
+	synchronized (contexto) {
+		usuariosConectados = (Integer) contexto
+				.getAttribute("usuariosConectados");
+
+		usuariosValidados = (Integer) contexto
+				.getAttribute("usuariosValidados");
+	}
+%>
+
+Y mostrar estas variables en la tabla.
+
+Finalmente, vemos el cambio que tenemos que hacer el fichero web.xml, entre los tags <web-app> y </web-app> (También se muestra un ejemplo de cómo cambiar el timeout de las sesiones, expresado en minutos):
+
+<listener>
+<listener-class>webses.WebSessionListener</listener-class>
+</listener>
+
+<session-config>
+<session-timeout>15</session-timeout>
+</session-config>
+
