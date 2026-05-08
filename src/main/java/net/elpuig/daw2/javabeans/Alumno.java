@@ -11,7 +11,28 @@ public class Alumno {
         this.nombre = nombre;
     }
 
-    public int getId() { return id; }
-    public String getCurso() { return curso; }
-    public String getNombre() { return nombre; }
+    public void setId(int id) {
+        this.id = id;
+    }
+
+    public void setCurso(String curso) {
+        this.curso = curso;
+    }
+
+    public void setNombre(String nombre) {
+        this.nombre = nombre;
+    }
+
+    public int getId() {
+        return id;
+    }
+
+    public String getCurso() {
+        return curso;
+    }
+
+    public String getNombre() {
+        return nombre;
+    }
+
 }
